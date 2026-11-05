@@ -5,6 +5,8 @@ __pycache__/
 .env
 *.db
 vector_store/
+.adk/
+.pytest_cache/
 
 # el CSV pesa más de 100 MB y GitHub lo rechaza
 data/*.csv

@@ -1,6 +1,6 @@
-duckdb
-pyarrow
-sqlglot
-google-adk
+duckdb==2.0.0
+pyarrow==26.0.1
+sqlglot==30.29.0
+google-adk==2.13.0
 litellm==1.105.1
-pytest
+pytest==9.2.0

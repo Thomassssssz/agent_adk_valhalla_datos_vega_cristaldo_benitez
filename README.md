@@ -1,1 +1,164 @@
-# agent_adk_valhalla_datos_vega_cristaldo_benitez
+# Valhalla Datos: asistente inteligente para consultar datos en lenguaje natural
+
+Prototipo de un agente de IA (Python + Google ADK) que permite a responsables de negocio de **Valhalla S.A.** consultar los datos de ventas haciendo preguntas en español, sin saber SQL. Trabajo del seminario "Modelos y Aplicaciones de la IA" (Instituto Politécnico Formosa), basado en la _Problemática 02: Democratización del acceso a los datos mediante inteligencia artificial_ (el enunciado está en `docs/`).
+
+**Integrantes:** Vega Tomas, Cristaldo Facundo, Benítez Franco.
+
+## ¿Qué hace?
+
+El usuario escribe una pregunta, por ejemplo _"¿Qué categoría generó mayores ingresos durante el último trimestre?"_. El agente:
+
+1. Inspecciona la estructura de los datos (tablas, columnas, valores posibles, rango de fechas).
+2. Genera una consulta SQL de solo lectura.
+3. La ejecuta de forma segura sobre los datos.
+4. Responde en lenguaje simple y **muestra el SQL utilizado**, para poder verificar de dónde salió cada cifra.
+
+Si la pregunta es ambigua, pide una aclaración; si los datos no alcanzan (por ejemplo, margen de ganancia o stock), lo dice en lugar de inventar una respuesta.
+
+## Herramientas del agente
+
+Definidas en `valhalla_agent/tools.py`. Cada una tiene una responsabilidad distinta y valida sus argumentos.
+
+| Herramienta                        | Qué hace                                                                                                                                                             |
+| ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `listar_fuentes()`                 | Lista las tablas disponibles y cuántas filas tiene cada una.                                                                                                         |
+| `inspeccionar_esquema()`           | Devuelve columnas, tipos, valores posibles de las columnas de texto y rangos de números y fechas. Se usa siempre antes de escribir SQL.                              |
+| `ejecutar_sql(consulta, pregunta)` | Ejecuta una consulta SQL de solo lectura (DuckDB). Devuelve estado (`ok`, `vacio`, `rechazada`, `error`, `timeout`), columnas, filas (máximo 50) y el SQL ejecutado. |
+| `consultar_historial(limite)`      | Devuelve las últimas consultas realizadas (pregunta, SQL, estado y fecha). El límite debe estar entre 1 y 20.                                                        |
+
+## Seguridad
+
+Las consultas no pueden modificar ni borrar información. Hay varias barreras independientes:
+
+- **Instrucciones del agente:** nunca debe modificar, borrar ni crear datos.
+- **Validación del SQL** (`valhalla_datos/seguridad.py`, con `sqlglot`): solo se acepta una sentencia `SELECT`, únicamente sobre las tablas cargadas, sin funciones que lean archivos o el entorno ni acceso a esquemas del sistema. El SQL que se ejecuta se regenera desde el árbol sintáctico validado.
+- **Segunda verificación con el parser de DuckDB:** debe ser una única sentencia `SELECT`.
+- **Conexión aislada:** la conexión que ejecuta las consultas no tiene acceso a archivos del disco, red ni extensiones.
+- **Límites:** máximo de filas por resultado, tiempo máximo por consulta (30 s) y límite de memoria.
+- **Trazabilidad:** cada consulta, incluso las rechazadas, se guarda en `historial.db` (pregunta, SQL, estado, filas y duración).
+
+## Estructura del proyecto
+
+```
+├── README.md
+├── requirements.txt
+├── data/
+│   └── valhalla_ventas.parquet    # dataset de ventas 2025 (1.000.000 de filas)
+├── docs/                          # enunciado de la problemática
+├── valhalla_agent/                # el agente (Google ADK)
+│   ├── agent.py                   # modelo, instrucciones y herramientas registradas
+│   └── tools.py                   # las 4 herramientas
+├── valhalla_datos/                # capa de datos
+│   ├── motor.py                   # carga de fuentes, esquema y ejecución segura
+│   ├── seguridad.py               # validación del SQL
+│   └── historial.py               # historial de consultas (SQLite)
+└── tests/
+    └── test_datos.py              # 31 pruebas
+```
+
+## Datos
+
+El dataset `data/valhalla_ventas.parquet` tiene 1.000.000 de ventas del 01/01/2025 al 31/12/2025, con las columnas: `venta_id`, `fecha`, `cliente_id`, `producto_id`, `producto`, `categoria`, `sucursal`, `provincia`, `cantidad`, `precio_unitario`, `descuento`, `total`, `metodo_pago` y `canal`.
+
+El mismo dataset existe también en CSV (129 MB), que **no se incluye en el repositorio** porque GitHub no admite archivos de más de 100 MB; el Parquet contiene los mismos datos.
+
+El motor (`MotorDatos`) puede incorporar fuentes CSV, TSV, Parquet y JSON/JSONL con `agregar_fuente(ruta, nombre)`. Por defecto, el agente carga solo el Parquet de ventas.
+
+## Requisitos
+
+- Python 3.10 o superior (probado con 3.14).
+- [Ollama](https://ollama.com) instalado y con sesión iniciada, porque el modelo se ejecuta en la nube de Ollama.
+- Modelo: `nemotron-3-nano:30b-cloud` (vía LiteLLM).
+
+## Instalación
+
+Ejemplo para Windows (PowerShell), con `uv`:
+
+```
+python -m uv venv env
+env\Scripts\activate
+python -m uv pip install -r requirements.txt
+```
+
+Si `uv` está disponible como comando, alcanza con `uv venv env` y `uv pip install -r requirements.txt`. Con pip estándar:
+
+```
+python -m venv env
+env\Scripts\activate
+pip install -r requirements.txt
+```
+
+Si dentro del entorno activado aparece `No module named uv`, instalá llamando a `uv` desde el Python global:
+
+```
+C:\Python314\python.exe -m uv pip install --python env\Scripts\python.exe -r requirements.txt
+```
+
+## Cómo usarlo
+
+1. Iniciá sesión en Ollama y comprobá que el modelo responde:
+
+   ```
+   ollama signin
+   ollama run nemotron-3-nano:30b-cloud
+   ```
+
+2. Con el entorno activado, desde la carpeta del repositorio, levantá la interfaz web de ADK:
+
+   ```
+   adk web .
+   ```
+
+   Si Windows bloquea `adk.exe` (política de control de aplicaciones), usá:
+
+   ```
+   python -m google.adk.cli web .
+   ```
+
+3. Abrí `http://127.0.0.1:8000` y elegí **`valhalla_agent`** en el selector.
+4. Escribí tus preguntas. En las pestañas **Events** y **Trace** se ve qué herramientas usa el agente en cada respuesta.
+
+En Windows la recarga automática no funciona: después de cambiar código, detené el servidor con `Ctrl+C` y volvé a iniciarlo.
+
+### Ejemplos de preguntas
+
+- ¿Qué datos tenés disponibles?
+- ¿Cuál fue el producto más vendido durante septiembre?
+- ¿Qué categoría generó mayores ingresos durante el último trimestre?
+- ¿Cuánto se vendió en Córdoba durante el último trimestre?
+- ¿Cuál fue el comportamiento de las ventas durante los últimos seis meses?
+- ¿Qué clientes realizaron más compras?
+- ¿Qué preguntas hice antes?
+
+## Pruebas
+
+Pruebas automáticas de la capa de datos (seguridad del SQL y ejecución sobre los datos reales):
+
+```
+python -m pytest -q
+```
+
+Además se probó el agente en `adk web` y se comparó con cálculos propios sobre el Parquet. Por ejemplo: total de ventas (1.000.000), producto más vendido en septiembre (Cargador USB-C 25W, 35.415 unidades), ventas en Córdoba en octubre-diciembre (21.712.028.100) e ingresos por categoría en el último trimestre (Informatica, 69.907.458.000). También se verificó que el agente informe cuando una pregunta no puede responderse con los datos (margen de ganancia) y que rechace pedidos de borrar datos.
+
+## Criterios de aceptación
+
+| Criterio                                   | Cómo se cumple                                                          |
+| ------------------------------------------ | ----------------------------------------------------------------------- |
+| Incorporar diferentes fuentes              | `MotorDatos.agregar_fuente` (CSV, TSV, Parquet, JSON)                   |
+| Inspeccionar estructuras                   | `inspeccionar_esquema` y `listar_fuentes`                               |
+| Interpretar lenguaje natural               | Agente ADK con modelo de lenguaje                                       |
+| Generar y ejecutar consultas               | `ejecutar_sql`                                                          |
+| Resultados comprensibles y respaldados     | Instrucciones del agente: responde solo con lo que devuelve la consulta |
+| Visualizar las consultas                   | El SQL se muestra en la respuesta y queda en el historial               |
+| Preguntas ambiguas o imposibles            | Instrucciones del agente y estado `vacio` en las consultas              |
+| Impedir operaciones no autorizadas         | Validación del SQL, conexión aislada y tests                            |
+| Distintas preguntas sobre un mismo dataset | En validación                                                           |
+
+## Limitaciones conocidas
+
+- El modelo es pequeño y **puede equivocarse al calcular de memoria** (por ejemplo, sumar totales). Para mitigarlo, las instrucciones le exigen que cualquier cifra salga de una consulta, y el SQL siempre es visible para poder verificarla.
+- Los períodos relativos ("último trimestre", "últimos seis meses") se calculan a partir de la última fecha de los datos (31/12/2025), no de la fecha actual.
+- Los datos no indican la moneda de los montos, por lo que el agente no la menciona.
+- El historial guarda la pregunta, el SQL, el estado y la cantidad de filas, pero no el resultado completo.
+- Todavía no se incorporaron bases de datos relacionales ni archivos `.sql` como fuente.
+- El modelo requiere conexión a internet y una cuenta de Ollama con sesión iniciada.

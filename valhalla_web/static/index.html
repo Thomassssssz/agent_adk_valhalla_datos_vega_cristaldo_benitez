@@ -1,0 +1,106 @@
+<!doctype html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Valhalla S.A. · Consultas de ventas</title>
+<meta name="description" content="Consultá las ventas de Valhalla en tus propias palabras y mirá de dónde sale cada dato.">
+<meta name="color-scheme" content="dark">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 32'%3E%3Crect width='24' height='32' fill='%2316232b'/%3E%3Cpath d='M12 4L5 13L12 22L19 13Z M6 30L12 22L18 30' fill='none' stroke='%23d2a24c' stroke-width='2.5' stroke-linecap='square'/%3E%3C/svg%3E">
+<link rel="stylesheet" href="/static/styles.css">
+</head>
+<body>
+
+<!-- Runas dibujadas como trazos (no dependen de ninguna tipografía del sistema) -->
+<svg width="0" height="0" style="position:absolute" aria-hidden="true" focusable="false">
+  <defs>
+    <symbol id="r-fehu" viewBox="0 0 24 32"><path d="M6 30V2M6 12L18 4M6 22L18 14"/></symbol>
+    <symbol id="r-uruz" viewBox="0 0 24 32"><path d="M6 30V2L18 10V22"/></symbol>
+    <symbol id="r-thurisaz" viewBox="0 0 24 32"><path d="M6 2V30M6 9L18 16L6 23"/></symbol>
+    <symbol id="r-ansuz" viewBox="0 0 24 32"><path d="M6 2V30M6 6L18 14M6 14L18 22"/></symbol>
+    <symbol id="r-raidho" viewBox="0 0 24 32"><path d="M6 2V30M6 2H14L18 7L14 14H6M6 14L18 30"/></symbol>
+    <symbol id="r-kenaz" viewBox="0 0 24 32"><path d="M17 4L6 16L17 28"/></symbol>
+    <symbol id="r-laguz" viewBox="0 0 24 32"><path d="M8 2V30M8 2L17 11"/></symbol>
+    <symbol id="r-othala" viewBox="0 0 24 32"><path d="M12 4L5 13L12 22L19 13Z M6 30L12 22L18 30"/></symbol>
+    <symbol id="r-dagaz" viewBox="0 0 24 32"><path d="M5 4L19 28V4L5 28Z"/></symbol>
+    <symbol id="r-isa" viewBox="0 0 24 32"><path d="M12 2V30"/></symbol>
+  </defs>
+</svg>
+
+<a class="saltar" href="#pregunta">Ir al campo de pregunta</a>
+
+<div class="app" id="app">
+
+  <aside class="riel" id="riel" aria-label="Memoria de consultas">
+    <div class="marca">
+      <svg class="runa runa-marca" aria-hidden="true"><use href="#r-othala"/></svg>
+      <div>
+        <h1 class="titulo">Valhalla S.A.</h1>
+        <p class="subtitulo">Ventas en lenguaje natural</p>
+      </div>
+    </div>
+
+    <button class="boton boton-nuevo" id="btn-nueva" type="button">Nueva conversación</button>
+
+    <section class="memoria" aria-labelledby="h-memoria">
+      <h2 id="h-memoria" class="h-riel">Memoria</h2>
+      <p class="ayuda" id="memoria-ayuda">Acá quedan las consultas que se van haciendo. Tocá una para volver a preguntarla.</p>
+      <ul class="lista-memoria" id="lista-memoria"></ul>
+    </section>
+
+    <section class="datos-riel" aria-labelledby="h-datos">
+      <h2 id="h-datos" class="h-riel">Datos disponibles</h2>
+      <dl class="ficha" id="ficha"><dt>Estado</dt><dd>Cargando…</dd></dl>
+    </section>
+  </aside>
+
+  <div class="banda" aria-hidden="true"></div>
+
+  <main class="principal">
+    <header class="barra-movil">
+      <button class="boton boton-riel" id="btn-riel" type="button" aria-controls="riel" aria-expanded="false">Memoria</button>
+      <span class="titulo titulo-chico">Valhalla S.A.</span>
+    </header>
+
+    <div class="hilo" id="hilo" aria-live="polite" aria-relevant="additions">
+
+      <section class="bienvenida" id="bienvenida">
+        <h2 class="gran-titulo">Preguntá por las ventas<br>como se lo preguntarías a un colega</h2>
+        <p class="bajada">El asistente escribe la consulta, la ejecuta sobre los datos y te muestra la respuesta junto con el SQL que usó, para que puedas comprobarla.</p>
+
+        <div class="arranque">
+          <div class="grupo">
+            <h3 class="h-grupo">Para empezar</h3>
+            <ul class="sugerencias">
+              <li><button type="button" class="sugerencia">¿Cuáles fueron las ventas totales por categoría en el último trimestre?</button></li>
+              <li><button type="button" class="sugerencia">¿Cómo evolucionaron las ventas mes a mes durante 2025?</button></li>
+              <li><button type="button" class="sugerencia">¿Qué sucursal vendió más unidades?</button></li>
+              <li><button type="button" class="sugerencia">¿Qué método de pago se usa más en cada canal?</button></li>
+            </ul>
+          </div>
+          <div class="grupo">
+            <h3 class="h-grupo">Para ver sus límites</h3>
+            <ul class="sugerencias">
+              <li><button type="button" class="sugerencia sugerencia-limite">Eliminá todas las ventas de Formosa Centro</button></li>
+              <li><button type="button" class="sugerencia sugerencia-limite">¿Cuál fue el margen de ganancia por producto?</button></li>
+              <li><button type="button" class="sugerencia sugerencia-limite">¿Cuáles fueron las últimas preguntas que se hicieron?</button></li>
+            </ul>
+          </div>
+        </div>
+      </section>
+
+    </div>
+
+    <form class="compositor" id="form" autocomplete="off">
+      <label class="visualmente-oculto" for="pregunta">Tu pregunta</label>
+      <textarea id="pregunta" name="pregunta" rows="1" maxlength="2000"
+        placeholder="Escribí tu pregunta sobre las ventas"></textarea>
+      <button class="boton boton-enviar" id="btn-enviar" type="submit">Preguntar</button>
+      <p class="pie">Enter envía, Shift + Enter agrega una línea. El asistente solo puede consultar, nunca modificar datos.</p>
+    </form>
+  </main>
+</div>
+
+<script src="/static/app.js"></script>
+</body>
+</html>

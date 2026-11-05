@@ -52,8 +52,12 @@ Las consultas no pueden modificar ni borrar información. Hay varias barreras in
 │   ├── motor.py                   # carga de fuentes, esquema y ejecución segura
 │   ├── seguridad.py               # validación del SQL
 │   └── historial.py               # historial de consultas (SQLite)
+├── valhalla_web/                  # interfaz web con temática Valhalla (opcional)
+│   ├── server.py                  # servidor FastAPI que conecta el navegador con el agente
+│   └── static/                    # página, estilos, JS y tipografías
 └── tests/
-    └── test_datos.py              # 31 pruebas
+    ├── test_datos.py              # 31 pruebas de la capa de datos
+    └── test_web.py                # 12 pruebas de la interfaz web
 ```
 
 ## Datos
@@ -120,6 +124,16 @@ C:\Python314\python.exe -m uv pip install --python env\Scripts\python.exe -r req
 
 En Windows la recarga automática no funciona: después de cambiar código, detené el servidor con `Ctrl+C` y volvé a iniciarlo.
 
+### Interfaz web de Valhalla (opcional)
+
+Además de `adk web`, el proyecto incluye una pantalla propia, pensada para quien no es técnico. Usa el mismo agente y muestra, junto con la respuesta, la tabla y el gráfico con los datos reales y el SQL ejecutado ("Cómo lo calculé"). Tiene además una barra lateral con la memoria de consultas.
+
+```
+python -m valhalla_web
+```
+
+Abrí `http://127.0.0.1:8080`. Es independiente de `adk web` (que usa el puerto 8000): no hace falta cambiar nada del agente.
+
 ### Ejemplos de preguntas
 
 - ¿Qué datos tenés disponibles?
@@ -132,7 +146,7 @@ En Windows la recarga automática no funciona: después de cambiar código, dete
 
 ## Pruebas
 
-Pruebas automáticas de la capa de datos (seguridad del SQL y ejecución sobre los datos reales):
+Pruebas automáticas de la capa de datos (seguridad del SQL y ejecución sobre los datos reales) y de la interfaz web (con un modelo simulado, sin necesidad de Ollama):
 
 ```
 python -m pytest -q

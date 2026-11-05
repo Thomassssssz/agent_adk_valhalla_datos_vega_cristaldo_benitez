@@ -17,7 +17,7 @@ Si la pregunta es ambigua, pide una aclaración; si los datos no alcanzan (por e
 
 ## Herramientas del agente
 
-Definidas en `valhalla_agent/tools.py`. Cada una tiene una responsabilidad distinta y valida sus argumentos.
+Definidas en `agent/tools/` (un archivo por herramienta). Cada una tiene una responsabilidad distinta y valida sus argumentos.
 
 | Herramienta                        | Qué hace                                                                                                                                                             |
 | ---------------------------------- | -------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
@@ -45,9 +45,15 @@ Las consultas no pueden modificar ni borrar información. Hay varias barreras in
 ├── data/
 │   └── valhalla_ventas.parquet    # dataset de ventas 2025 (1.000.000 de filas)
 ├── docs/                          # enunciado de la problemática
-├── valhalla_agent/                # el agente (Google ADK)
-│   ├── agent.py                   # modelo, instrucciones y herramientas registradas
-│   └── tools.py                   # las 4 herramientas
+├── agent/                         # el agente (Google ADK)
+│   ├── agent.py                   # modelo y herramientas registradas
+│   ├── instructions.py            # instrucciones (prompt) del agente
+│   └── tools/                     # una herramienta por archivo
+│       ├── motor.py               # acceso compartido al motor de datos
+│       ├── fuentes.py             # listar_fuentes
+│       ├── esquema.py             # inspeccionar_esquema
+│       ├── consulta.py            # ejecutar_sql
+│       └── historial_consultas.py # consultar_historial
 ├── valhalla_datos/                # capa de datos
 │   ├── motor.py                   # carga de fuentes, esquema y ejecución segura
 │   ├── seguridad.py               # validación del SQL
@@ -119,7 +125,7 @@ C:\Python314\python.exe -m uv pip install --python env\Scripts\python.exe -r req
    python -m google.adk.cli web .
    ```
 
-3. Abrí `http://127.0.0.1:8000` y elegí **`valhalla_agent`** en el selector.
+3. Abrí `http://127.0.0.1:8000` y elegí **`agent`** en el selector.
 4. Escribí tus preguntas. En las pestañas **Events** y **Trace** se ve qué herramientas usa el agente en cada respuesta.
 
 En Windows la recarga automática no funciona: después de cambiar código, detené el servidor con `Ctrl+C` y volvé a iniciarlo.

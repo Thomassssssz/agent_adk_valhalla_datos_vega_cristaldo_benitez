@@ -9,8 +9,8 @@ from google.adk.models.base_llm import BaseLlm
 from google.adk.models.llm_response import LlmResponse
 from google.genai import types
 
-from valhalla_agent import tools
-from valhalla_agent.tools import consultar_historial, ejecutar_sql, inspeccionar_esquema, listar_fuentes
+from agent.tools import consultar_historial, ejecutar_sql, inspeccionar_esquema, listar_fuentes
+from agent.tools import motor as modulo_motor
 from valhalla_web import crear_app
 
 
@@ -41,9 +41,9 @@ def _agente(**kw):
 @pytest.fixture
 def cliente(tmp_path, monkeypatch):
     # historial temporal para no ensuciar el historial.db real
-    monkeypatch.setattr(tools, "RUTA_HISTORIAL", tmp_path / "historial.db")
-    monkeypatch.setattr(tools, "_motor", None)
-    monkeypatch.setattr(tools, "_error_carga", None)
+    monkeypatch.setattr(modulo_motor, "RUTA_HISTORIAL", tmp_path / "historial.db")
+    monkeypatch.setattr(modulo_motor, "_motor", None)
+    monkeypatch.setattr(modulo_motor, "_error_carga", None)
     return TestClient(crear_app(_agente()))
 
 
@@ -88,9 +88,9 @@ def test_chat_registra_en_el_historial(cliente):
 
 
 def test_consulta_de_escritura_queda_rechazada(tmp_path, monkeypatch):
-    monkeypatch.setattr(tools, "RUTA_HISTORIAL", tmp_path / "historial.db")
-    monkeypatch.setattr(tools, "_motor", None)
-    monkeypatch.setattr(tools, "_error_carga", None)
+    monkeypatch.setattr(modulo_motor, "RUTA_HISTORIAL", tmp_path / "historial.db")
+    monkeypatch.setattr(modulo_motor, "_motor", None)
+    monkeypatch.setattr(modulo_motor, "_error_carga", None)
     c = TestClient(crear_app(_agente(sql="DROP TABLE ventas")))
     ev = _eventos(c.post("/api/chat", json={"mensaje": "borrá todo", "sesion": "sesion-de-prueba-3"}))
     assert ev[1]["respuesta"]["estado"] == "rechazada"
@@ -99,9 +99,9 @@ def test_consulta_de_escritura_queda_rechazada(tmp_path, monkeypatch):
 
 
 def test_error_del_modelo_se_informa_con_pista(tmp_path, monkeypatch):
-    monkeypatch.setattr(tools, "RUTA_HISTORIAL", tmp_path / "historial.db")
-    monkeypatch.setattr(tools, "_motor", None)
-    monkeypatch.setattr(tools, "_error_carga", None)
+    monkeypatch.setattr(modulo_motor, "RUTA_HISTORIAL", tmp_path / "historial.db")
+    monkeypatch.setattr(modulo_motor, "_motor", None)
+    monkeypatch.setattr(modulo_motor, "_error_carga", None)
     c = TestClient(crear_app(_agente(falla=True)))
     ev = _eventos(c.post("/api/chat", json={"mensaje": "hola", "sesion": "sesion-de-prueba-4"}))
     assert ev[-1]["tipo"] == "error" and "ollama signin" in ev[-1]["mensaje"]

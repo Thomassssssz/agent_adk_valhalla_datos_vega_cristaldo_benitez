@@ -55,7 +55,7 @@ def _mensaje_de_error(exc: Exception) -> str:
 
 def crear_app(agente=None) -> FastAPI:
     """Arma la aplicación web. `agente` permite inyectar otro agente (los tests usan
-    uno con un modelo simulado); si es None se usa el root_agent real de valhalla_agent."""
+    uno con un modelo simulado); si es None se usa el root_agent real de agent."""
     from google.adk.runners import Runner
     from google.adk.sessions import InMemorySessionService
     from google.genai import types
@@ -67,7 +67,7 @@ def crear_app(agente=None) -> FastAPI:
     def obtener_runner():
         if estado["runner"] is None:
             if estado["agente"] is None:
-                from valhalla_agent.agent import root_agent  # importa el agente real
+                from agent.agent import root_agent  # importa el agente real
                 estado["agente"] = root_agent
             estado["runner"] = Runner(
                 app_name=APP_NAME, agent=estado["agente"], session_service=servicio_sesiones)
@@ -87,7 +87,7 @@ def crear_app(agente=None) -> FastAPI:
     @app.get("/api/estado")
     def api_estado():
         """Datos para el encabezado: tablas cargadas y rango de fechas."""
-        from valhalla_agent import tools
+        from agent import tools
         fuentes = tools.listar_fuentes()
         if fuentes["estado"] != "ok":
             return {"estado": "error", "mensaje": fuentes["mensaje"]}
@@ -107,8 +107,8 @@ def crear_app(agente=None) -> FastAPI:
     @app.get("/api/historial")
     def api_historial():
         """Últimas consultas registradas por la capa de datos (las mismas que ve el agente)."""
-        from valhalla_agent import tools
-        motor, error = tools._obtener_motor()
+        from agent.tools.motor import obtener_motor
+        motor, error = obtener_motor()
         if error:
             return {"estado": "error", "mensaje": error, "consultas": []}
         consultas = [

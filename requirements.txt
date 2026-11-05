@@ -2,5 +2,5 @@ duckdb
 pyarrow
 sqlglot
 google-adk
-litellm
+litellm==1.105.1
 pytest

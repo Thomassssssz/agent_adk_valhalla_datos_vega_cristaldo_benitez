@@ -1,8 +1,10 @@
+env/
 .venv/
 __pycache__/
 *.pyc
 .env
 *.db
+vector_store/
 
-
+# el CSV pesa más de 100 MB y GitHub lo rechaza
 data/*.csv

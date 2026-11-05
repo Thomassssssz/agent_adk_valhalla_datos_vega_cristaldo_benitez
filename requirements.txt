@@ -1,0 +1,6 @@
+duckdb
+pyarrow
+sqlglot
+google-adk
+litellm
+pytest

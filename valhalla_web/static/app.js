@@ -274,6 +274,7 @@
     inspeccionar_esquema: "Revisó la estructura de los datos.",
     listar_fuentes: "Revisó las fuentes disponibles.",
     consultar_historial: "Consultó el historial de consultas.",
+    cargar_fuente: "Cargó un archivo de datos.",
   };
 
   /* ---------- Estado de la conversación ---------- */
@@ -300,6 +301,7 @@
     listar_fuentes: ["ansuz", "Viendo qué fuentes hay", "Revisó las fuentes disponibles"],
     ejecutar_sql: ["kenaz", "Ejecutando la consulta sobre los datos", "Ejecutó una consulta"],
     consultar_historial: ["laguz", "Mirando el historial", "Consultó el historial"],
+    cargar_fuente: ["othala", "Cargando el archivo de datos", "Cargó un archivo de datos"],
   };
 
   function crearPaso(rn, texto, estado = "activo") {

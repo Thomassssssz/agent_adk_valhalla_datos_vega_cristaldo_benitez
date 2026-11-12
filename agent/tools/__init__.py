@@ -1,3 +1,4 @@
+from .carga import cargar_fuente
 from .consulta import ejecutar_sql
 from .esquema import inspeccionar_esquema
 from .fuentes import listar_fuentes
@@ -8,4 +9,5 @@ __all__ = [
     "inspeccionar_esquema",
     "ejecutar_sql",
     "consultar_historial",
+    "cargar_fuente",
 ]

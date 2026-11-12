@@ -68,6 +68,17 @@ class MotorDatos:
     def tablas(self) -> list[str]:
         return sorted(self._fuentes)
 
+    def origen(self, tabla: str) -> str | None:
+        """Ruta del archivo del que se cargó una tabla (None si no existe)."""
+        return self._fuentes.get(tabla)
+
+    def contar_filas(self, tabla: str) -> int:
+        """Cantidad de filas de una tabla cargada (no pasa por el historial)."""
+        if tabla not in self._fuentes:
+            raise KeyError(f"No existe la tabla: {tabla}")
+        with self._lock:
+            return self._con.execute(f'SELECT count(*) FROM "{tabla}"').fetchone()[0]
+
     # ---------- RF02: inspección ----------
     def esquema(self, max_valores: int = 25) -> dict:
         """Estructura de cada tabla: columnas, tipos, nulos, rangos y valores posibles."""

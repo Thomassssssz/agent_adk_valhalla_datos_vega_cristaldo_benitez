@@ -25,6 +25,7 @@ Definidas en `agent/tools/` (un archivo por herramienta). Cada una tiene una res
 | `inspeccionar_esquema()`           | Devuelve columnas, tipos, valores posibles de las columnas de texto y rangos de números y fechas. Se usa siempre antes de escribir SQL.                              |
 | `ejecutar_sql(consulta, pregunta)` | Ejecuta una consulta SQL de solo lectura (DuckDB). Devuelve estado (`ok`, `vacio`, `rechazada`, `error`, `timeout`), columnas, filas (máximo 50) y el SQL ejecutado. |
 | `consultar_historial(limite)`      | Devuelve las últimas consultas realizadas (pregunta, SQL, estado y fecha). El límite debe estar entre 1 y 20.                                                        |
+| `cargar_fuente(nombre_archivo)`    | Incorpora un archivo de la carpeta `data/` (CSV, TSV, Parquet, JSON o JSONL) como tabla nueva, o la actualiza. Por seguridad solo acepta nombres de archivos de `data/`, nunca rutas. |
 
 ## Seguridad
 
@@ -53,7 +54,8 @@ Las consultas no pueden modificar ni borrar información. Hay varias barreras in
 │       ├── fuentes.py             # listar_fuentes
 │       ├── esquema.py             # inspeccionar_esquema
 │       ├── consulta.py            # ejecutar_sql
-│       └── historial_consultas.py # consultar_historial
+│       ├── historial_consultas.py # consultar_historial
+│       └── carga.py               # cargar_fuente
 ├── valhalla_datos/                # capa de datos
 │   ├── motor.py                   # carga de fuentes, esquema y ejecución segura
 │   ├── seguridad.py               # validación del SQL
@@ -63,6 +65,7 @@ Las consultas no pueden modificar ni borrar información. Hay varias barreras in
 │   └── static/                    # página, estilos, JS y tipografías
 └── tests/
     ├── test_datos.py              # 31 pruebas de la capa de datos
+    ├── test_fuentes.py            # 19 pruebas de la carga de fuentes
     └── test_web.py                # 12 pruebas de la interfaz web
 ```
 
@@ -72,12 +75,14 @@ El dataset `data/valhalla_ventas.parquet` tiene 1.000.000 de ventas del 01/01/20
 
 El mismo dataset existe también en CSV (129 MB), que **no se incluye en el repositorio** porque GitHub no admite archivos de más de 100 MB; el Parquet contiene los mismos datos.
 
-El motor (`MotorDatos`) puede incorporar fuentes CSV, TSV, Parquet y JSON/JSONL con `agregar_fuente(ruta, nombre)`. Por defecto, el agente carga solo el Parquet de ventas.
+El motor (`MotorDatos`) puede incorporar fuentes CSV, TSV, Parquet y JSON/JSONL con `agregar_fuente(ruta, nombre)`.
+
+**Fuentes del agente:** al iniciar, el agente carga **todos los archivos soportados de la carpeta `data/`**. El Parquet de ventas queda como la tabla `ventas`; cada archivo adicional toma el nombre del archivo (por ejemplo, `data/valhalla_ventas.csv` → tabla `valhalla_ventas`, `data/metas_2025.csv` → tabla `metas_2025`). También se puede copiar un archivo a `data/` con el agente andando y pedirle en el chat: _"Cargá el archivo metas_2025.csv"_. Un archivo que no se pueda leer no impide cargar el resto, y un archivo cuyo nombre choque con una tabla existente recibe un sufijo para no pisarla.
 
 ## Requisitos
 
 - Python 3.10 o superior (probado con 3.14).
-- [Ollama](https://ollama.com) instalado y con sesión iniciada, porque el modelo se ejecuta en la nube de Ollama.
+- [Ollama](https://ollama.com) instalado. El modelo se ejecuta **localmente**: los datos no salen de la computadora.
 - Modelo: `qwen3:8b` (vía LiteLLM).
 
 ## Instalación
@@ -106,10 +111,10 @@ C:\Python314\python.exe -m uv pip install --python env\Scripts\python.exe -r req
 
 ## Cómo usarlo
 
-1. Iniciá sesión en Ollama y comprobá que el modelo responde:
+1. Descargá el modelo (solo la primera vez) y comprobá que responde:
 
    ```
-   ollama signin
+   ollama pull qwen3:8b
    ollama run qwen3:8b
    ```
 
@@ -164,7 +169,7 @@ Además se probó el agente en `adk web` y se comparó con cálculos propios sob
 
 | Criterio                                   | Cómo se cumple                                                          |
 | ------------------------------------------ | ----------------------------------------------------------------------- |
-| Incorporar diferentes fuentes              | `MotorDatos.agregar_fuente` (CSV, TSV, Parquet, JSON)                   |
+| Incorporar diferentes fuentes              | Carga automática de `data/` y herramienta `cargar_fuente` (CSV, TSV, Parquet, JSON) |
 | Inspeccionar estructuras                   | `inspeccionar_esquema` y `listar_fuentes`                               |
 | Interpretar lenguaje natural               | Agente ADK con modelo de lenguaje                                       |
 | Generar y ejecutar consultas               | `ejecutar_sql`                                                          |
@@ -181,4 +186,4 @@ Además se probó el agente en `adk web` y se comparó con cálculos propios sob
 - Los datos no indican la moneda de los montos, por lo que el agente no la menciona.
 - El historial guarda la pregunta, el SQL, el estado y la cantidad de filas, pero no el resultado completo.
 - Todavía no se incorporaron bases de datos relacionales ni archivos `.sql` como fuente.
-- El modelo requiere conexión a internet y una cuenta de Ollama con sesión iniciada.
+- El modelo (`qwen3:8b`, ~5 GB) corre en la computadora: necesita memoria suficiente y responde más lento que un modelo en la nube.

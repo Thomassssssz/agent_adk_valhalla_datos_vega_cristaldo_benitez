@@ -78,7 +78,7 @@ El motor (`MotorDatos`) puede incorporar fuentes CSV, TSV, Parquet y JSON/JSONL 
 
 - Python 3.10 o superior (probado con 3.14).
 - [Ollama](https://ollama.com) instalado y con sesión iniciada, porque el modelo se ejecuta en la nube de Ollama.
-- Modelo: `nemotron-3-nano:30b-cloud` (vía LiteLLM).
+- Modelo: `qwen3:8b` (vía LiteLLM).
 
 ## Instalación
 

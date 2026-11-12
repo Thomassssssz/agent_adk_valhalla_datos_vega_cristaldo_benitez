@@ -78,7 +78,7 @@ El motor (`MotorDatos`) puede incorporar fuentes CSV, TSV, Parquet y JSON/JSONL 
 
 - Python 3.10 o superior (probado con 3.14).
 - [Ollama](https://ollama.com) instalado y con sesión iniciada, porque el modelo se ejecuta en la nube de Ollama.
-- Modelo: `nemotron-3-nano:30b-cloud` (vía LiteLLM).
+- Modelo: `qwen3:8b` (vía LiteLLM).
 
 ## Instalación
 
@@ -110,7 +110,7 @@ C:\Python314\python.exe -m uv pip install --python env\Scripts\python.exe -r req
 
    ```
    ollama signin
-   ollama run nemotron-3-nano:30b-cloud
+   ollama run qwen3:8b
    ```
 
 2. Con el entorno activado, desde la carpeta del repositorio, levantá la interfaz web de ADK:

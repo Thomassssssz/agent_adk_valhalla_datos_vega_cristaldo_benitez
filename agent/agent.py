@@ -9,7 +9,7 @@ from .instructions import INSTRUCCIONES
 from .tools import consultar_historial, ejecutar_sql, inspeccionar_esquema, listar_fuentes
 
 root_agent = Agent(
-    model=LiteLlm("ollama_chat/nemotron-3-nano:30b-cloud"),
+    model=LiteLlm("ollama_chat/qwen3:8b"),
     name="root_agent",
     description="Asistente que responde preguntas de negocio de Valhalla consultando sus datos de ventas.",
     instruction=INSTRUCCIONES,

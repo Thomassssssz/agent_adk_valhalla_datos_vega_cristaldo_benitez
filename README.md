@@ -110,7 +110,7 @@ C:\Python314\python.exe -m uv pip install --python env\Scripts\python.exe -r req
 
    ```
    ollama signin
-   ollama run nemotron-3-nano:30b-cloud
+   ollama run qwen3:8b
    ```
 
 2. Con el entorno activado, desde la carpeta del repositorio, levantá la interfaz web de ADK:

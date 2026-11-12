@@ -25,7 +25,7 @@ Definidas en `agent/tools/` (un archivo por herramienta). Cada una tiene una res
 | `inspeccionar_esquema()`           | Devuelve columnas, tipos, valores posibles de las columnas de texto y rangos de números y fechas. Se usa siempre antes de escribir SQL.                              |
 | `ejecutar_sql(consulta, pregunta)` | Ejecuta una consulta SQL de solo lectura (DuckDB). Devuelve estado (`ok`, `vacio`, `rechazada`, `error`, `timeout`), columnas, filas (máximo 50) y el SQL ejecutado. |
 | `consultar_historial(limite)`      | Devuelve las últimas consultas realizadas (pregunta, SQL, estado y fecha). El límite debe estar entre 1 y 20.                                                        |
-| `cargar_fuente(nombre_archivo)`    | Incorpora un archivo de la carpeta `data/` (CSV, TSV, Parquet, JSON o JSONL) como tabla nueva, o la actualiza. Por seguridad solo acepta nombres de archivos de `data/`, nunca rutas. |
+| `cargar_fuente(nombre_archivo)`    | Incorpora un archivo de la carpeta `data/` (CSV, TSV, Parquet, JSON o JSONL). Mismo nombre que una fuente cargada = mismos datos: la reemplaza en vez de duplicarla. Por seguridad solo acepta nombres de archivos de `data/`, nunca rutas. |
 
 ## Seguridad
 
@@ -65,7 +65,7 @@ Las consultas no pueden modificar ni borrar información. Hay varias barreras in
 │   └── static/                    # página, estilos, JS y tipografías
 └── tests/
     ├── test_datos.py              # 31 pruebas de la capa de datos
-    ├── test_fuentes.py            # 19 pruebas de la carga de fuentes
+    ├── test_fuentes.py            # 23 pruebas de la carga de fuentes
     └── test_web.py                # 12 pruebas de la interfaz web
 ```
 
@@ -77,7 +77,12 @@ El mismo dataset existe también en CSV (129 MB), que **no se incluye en el repo
 
 El motor (`MotorDatos`) puede incorporar fuentes CSV, TSV, Parquet y JSON/JSONL con `agregar_fuente(ruta, nombre)`.
 
-**Fuentes del agente:** al iniciar, el agente carga **todos los archivos soportados de la carpeta `data/`**. El Parquet de ventas queda como la tabla `ventas`; cada archivo adicional toma el nombre del archivo (por ejemplo, `data/valhalla_ventas.csv` → tabla `valhalla_ventas`, `data/metas_2025.csv` → tabla `metas_2025`). También se puede copiar un archivo a `data/` con el agente andando y pedirle en el chat: _"Cargá el archivo metas_2025.csv"_. Un archivo que no se pueda leer no impide cargar el resto, y un archivo cuyo nombre choque con una tabla existente recibe un sufijo para no pisarla.
+**Fuentes del agente:** al iniciar, el agente carga los archivos soportados de la carpeta `data/` con una regla simple: **mismo nombre de archivo = mismos datos = una sola tabla**; el formato es solo cómo está guardado.
+
+- `valhalla_ventas.parquet` y `valhalla_ventas.csv` son la misma tabla `ventas`. Si están los dos, se carga uno solo (preferencia: Parquet, CSV, TSV, JSON, JSONL), así los datos no se duplican.
+- Un archivo con otro nombre es otra fuente: `data/metas_2025.csv` → tabla `metas_2025`.
+- Con el agente andando se puede pedir en el chat _"Cargá el archivo valhalla_ventas.csv"_: la tabla `ventas` pasa a leerse desde el CSV (la reemplaza, no la duplica). Un archivo nuevo copiado a `data/` se agrega con el mismo pedido.
+- Un archivo que no se pueda leer no impide cargar el resto, y uno cuyo nombre choque con una tabla distinta (por ejemplo `ventas.csv`) recibe un sufijo para no pisarla.
 
 ## Requisitos
 

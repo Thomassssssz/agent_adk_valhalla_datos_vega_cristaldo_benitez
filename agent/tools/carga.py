@@ -10,8 +10,10 @@ def _disponibles() -> list[str]:
 
 
 def cargar_fuente(nombre_archivo: str) -> dict:
-    """Incorpora un archivo de datos de la carpeta data/ como una tabla consultable
-    (o la actualiza si ya estaba cargada). Formatos: CSV, TSV, Parquet, JSON y JSONL.
+    """Incorpora un archivo de datos de la carpeta data/ como una tabla consultable.
+    Formatos: CSV, TSV, Parquet, JSON y JSONL. Si el archivo tiene el mismo nombre que
+    una fuente ya cargada (por ejemplo valhalla_ventas.csv y valhalla_ventas.parquet),
+    son los mismos datos en otro formato: reemplaza esa tabla en lugar de duplicarla.
 
     Usala solo cuando el usuario pida cargar, agregar, incorporar o actualizar un
     archivo de datos. Por seguridad acepta únicamente el NOMBRE de un archivo que esté
@@ -54,19 +56,23 @@ def cargar_fuente(nombre_archivo: str) -> dict:
     if error:
         return {"estado": "error", "mensaje": error}
 
-    tabla = ("ventas" if ruta == modulo_motor.RUTA_DATOS.resolve()
-             else modulo_motor.nombre_para(motor, ruta))
+    tabla = modulo_motor.nombre_para(motor, ruta)
+    anterior = motor.origen(tabla)
     try:
         motor.agregar_fuente(str(ruta), tabla)
         filas = motor.contar_filas(tabla)
     except Exception as e:  # noqa: BLE001
         return {"estado": "error", "mensaje": f"No se pudo leer {nombre}: {str(e)[:300]}"}
 
+    mensaje = f"Se cargó {nombre} como la tabla {tabla} ({filas} filas)."
+    if anterior and Path(anterior).name != nombre:
+        mensaje += (f" Es el mismo dataset que {Path(anterior).name} en otro formato, "
+                    f"así que reemplazó a la tabla {tabla} en lugar de duplicarla.")
     return {
         "estado": "ok",
         "archivo": nombre,
         "tabla": tabla,
         "filas": filas,
-        "mensaje": f"Se cargó {nombre} como la tabla {tabla} ({filas} filas). "
-                   "Usá inspeccionar_esquema para ver sus columnas.",
+        "reemplazo": Path(anterior).name if anterior else None,
+        "mensaje": mensaje + " Usá inspeccionar_esquema para ver sus columnas.",
     }

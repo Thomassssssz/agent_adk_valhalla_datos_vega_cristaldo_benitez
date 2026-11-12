@@ -105,3 +105,38 @@ def test_un_archivo_roto_no_impide_cargar_el_resto(carpeta_datos):
     (carpeta_datos / "roto.json").write_text("{esto no es json", encoding="utf-8")
     assert "ventas" in _tablas()
     assert any("roto.json" in a for a in modulo_motor.avisos_carga)
+
+
+# ---------- Mismo nombre = mismos datos = una sola tabla ----------
+def test_mismo_dataset_en_dos_formatos_es_una_sola_tabla(carpeta_datos):
+    (carpeta_datos / "valhalla_ventas.csv").write_text(
+        "sucursal,total\nCordoba,100\nPosadas,50\nCordoba,25\n", encoding="utf-8")
+    tablas = _tablas()
+    assert set(tablas) == {"ventas", "metas_2025", "sucursales"}   # no aparece valhalla_ventas
+    assert tablas["ventas"]["origen"] == "valhalla_ventas.parquet"  # se prefiere el Parquet
+
+
+def test_cargar_el_csv_de_ventas_reemplaza_la_tabla_no_la_duplica(carpeta_datos):
+    listar_fuentes()
+    (carpeta_datos / "valhalla_ventas.csv").write_text(
+        "sucursal,total\nCordoba,10\nPosadas,20\n", encoding="utf-8")
+    r = cargar_fuente("valhalla_ventas.csv")
+    assert r["estado"] == "ok" and r["tabla"] == "ventas" and r["filas"] == 2
+    assert r["reemplazo"] == "valhalla_ventas.parquet"
+    tablas = _tablas()
+    assert "valhalla_ventas" not in tablas
+    assert tablas["ventas"]["origen"] == "valhalla_ventas.csv"
+    assert ejecutar_sql("SELECT SUM(total) FROM ventas")["filas"] == [[30]]
+
+
+def test_si_solo_esta_el_csv_las_ventas_salen_del_csv(carpeta_datos):
+    (carpeta_datos / "valhalla_ventas.parquet").unlink()
+    (carpeta_datos / "valhalla_ventas.csv").write_text("sucursal,total\nCordoba,7\n", encoding="utf-8")
+    tablas = _tablas()
+    assert tablas["ventas"]["origen"] == "valhalla_ventas.csv" and tablas["ventas"]["filas"] == 1
+
+
+def test_sin_archivo_de_ventas_da_un_error_controlado(carpeta_datos):
+    (carpeta_datos / "valhalla_ventas.parquet").unlink()
+    r = listar_fuentes()
+    assert r["estado"] == "error" and "valhalla_ventas" in r["mensaje"]
